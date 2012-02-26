@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Android | Molded Bits]]></title>
   <link href="http://www.moldedbits.com/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-02-26T07:19:14+05:30</updated>
+  <updated>2012-02-26T12:39:20+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -26,8 +26,10 @@ Burst the bubbles carrying alphabets in the right order to make dictionary
 words, all while racing against the clock.</p>
 
 <p>We are currently working on making some awesome game art. In the
-mean while you can try Bumble with minimalistic graphics <a href="/files/bumble/Bumble-0.0.9.apk" title="Download">here</a>.
-We would love your feedback.</p>
+mean while you can try Bumble with minimalistic graphics <a href="/files/bumble/Bumble-0.0.9.apk" title="Download">here</a> (or
+scan the QR code below). We would love your feedback.</p>
+
+<p><img class="center" src="/images/qr_bumble_009.png"></p>
 
 <p>Cheers!<br/>
 The Molded Bits Team</p>
