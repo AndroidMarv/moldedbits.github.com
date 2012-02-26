@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Molded Bits]]></title>
-  <link href="http://moldedbits.github.com/atom.xml" rel="self"/>
-  <link href="http://moldedbits.github.com/"/>
-  <updated>2012-02-26T06:45:08+05:30</updated>
-  <id>http://moldedbits.github.com/</id>
+  <link href="http://www.moldedbits.com/atom.xml" rel="self"/>
+  <link href="http://www.moldedbits.com/"/>
+  <updated>2012-02-26T06:51:23+05:30</updated>
+  <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Hello World!]]></title>
-    <link href="http://moldedbits.github.com/blog/2012/02/25/hello-world/"/>
+    <link href="http://www.moldedbits.com/blog/2012/02/25/hello-world/"/>
     <updated>2012-02-25T17:03:00+05:30</updated>
-    <id>http://moldedbits.github.com/blog/2012/02/25/hello-world</id>
+    <id>http://www.moldedbits.com/blog/2012/02/25/hello-world</id>
     <content type="html"><![CDATA[<p>After a month of hard work, we are ready with the beta version of our
 first game for Android, Bumble.</p>
 
@@ -26,7 +26,7 @@ Burst the bubbles carrying alphabets in the right order to make dictionary
 words, all while racing against the clock.</p>
 
 <p>We are currently working on making some awesome game art. In the
-mean while you can try Bumble with minimalistic graphics <a href="http://moldedbits.github.com/files/bumble/Bumble-0.0.9.apk" title="Download">here</a>.
+mean while you can try Bumble with minimalistic graphics <a href="http://www.moldedbits.com/files/bumble/Bumble-0.0.9.apk" title="Download">here</a>.
 We would love your feedback.</p>
 
 <p>Cheers!<br/>
