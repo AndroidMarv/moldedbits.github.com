@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Molded Bits]]></title>
-  <link href="http://moldedbits.github.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: libgdx | Molded Bits]]></title>
+  <link href="http://moldedbits.github.com/blog/categories/libgdx/atom.xml" rel="self"/>
   <link href="http://moldedbits.github.com/"/>
   <updated>2012-02-26T06:31:32+05:30</updated>
   <id>http://moldedbits.github.com/</id>
