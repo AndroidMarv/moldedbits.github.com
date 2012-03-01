@@ -4,7 +4,7 @@
   <title><![CDATA[Category: android, | Molded Bits]]></title>
   <link href="http://www.moldedbits.com/blog/categories/android-/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-03-01T16:02:06+05:30</updated>
+  <updated>2012-03-01T19:21:26+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -27,6 +27,9 @@ Bumble is an addictive word game, it is how anagrams are supposed to be played.<
 
 <p>Bumble is completely free of charge, and will always remain so. There are no ads, no hidden costs
 and you will never have to pay for any new features.</p>
+
+<p>Bumble was made using the awesome <a href="http://code.google.com/p/libgdx/" title="libgdx">libgdx</a> library. If you plan on making games for
+Android, we suggest you check them out.</p>
 
 <p>If you love Bumble, do spread the word. It means a lot to us.</p>
 
