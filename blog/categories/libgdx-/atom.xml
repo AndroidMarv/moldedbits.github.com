@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Molded Bits]]></title>
-  <link href="http://www.moldedbits.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: libgdx, | Molded Bits]]></title>
+  <link href="http://www.moldedbits.com/blog/categories/libgdx-/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
   <updated>2012-03-01T13:25:05+05:30</updated>
   <id>http://www.moldedbits.com/</id>
@@ -29,30 +29,7 @@ and you will never have to pay for any new features.</p>
 <p>If you love Bumble, do spread the word. It means a lot to us.</p>
 
 <p>Download it <a href="https://market.android.com/details?id=com.moldedbits.bumble" title="market link">here</a>
-<img class="center" src="http://www.moldedbits.com/images/qr_bumble_market.png"></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hello World!]]></title>
-    <link href="http://www.moldedbits.com/blog/2012/02/25/hello-world/"/>
-    <updated>2012-02-25T17:03:00+05:30</updated>
-    <id>http://www.moldedbits.com/blog/2012/02/25/hello-world</id>
-    <content type="html"><![CDATA[<p>After a month of hard work, we are ready with the beta version of our
-first game for Android, Bumble.</p>
-
-<p>Bumble is a fun and challenging word game with a unique take on anagrams.
-Burst the bubbles carrying alphabets in the right order to make dictionary
-words, all while racing against the clock.</p>
-
-<p>We are currently working on making some awesome game art. In the
-mean while you can try Bumble with minimalistic graphics <a href="http://www.moldedbits.com/files/bumble/Bumble-0.0.9.apk" title="Download">here</a> (or
-scan the QR code below). We would love your feedback.</p>
-
-<p><img class="center" src="http://www.moldedbits.com/images/qr_bumble_009.png"></p>
-
-<p>Cheers!<br/>
-The Molded Bits Team</p>
+<img class="center" src="/images/qr_bumble_market.png"></p>
 ]]></content>
   </entry>
   
