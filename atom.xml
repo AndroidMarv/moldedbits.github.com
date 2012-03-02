@@ -4,7 +4,7 @@
   <title><![CDATA[Molded Bits]]></title>
   <link href="http://www.moldedbits.com/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-03-02T22:13:17+05:30</updated>
+  <updated>2012-03-02T22:14:44+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -627,8 +627,8 @@ with these results. AndroidApplication provides us with a convinient method to d
 
 <p>Thats about all you need to integrate Scoreloop with libgdx for global scores. Hope it helps. If I missed anything, do let me know through the comments.</p>
 
-<p>Cheers,
-basilisk
+<p>Cheers,<br/>
+basilisk<br/>
 Molded Bits</p>
 ]]></content>
   </entry>
