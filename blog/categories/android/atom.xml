@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Android | Molded Bits]]></title>
+  <title><![CDATA[Category: android | Molded Bits]]></title>
   <link href="http://www.moldedbits.com/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-03-01T19:47:21+05:30</updated>
+  <updated>2012-03-02T22:13:17+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -14,25 +14,584 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Hello World!]]></title>
-    <link href="http://www.moldedbits.com/blog/2012/02/25/hello-world/"/>
-    <updated>2012-02-25T17:03:00+05:30</updated>
-    <id>http://www.moldedbits.com/blog/2012/02/25/hello-world</id>
-    <content type="html"><![CDATA[<p>After a month of hard work, we are ready with the beta version of our
-first game for Android, Bumble.</p>
+    <title type="html"><![CDATA[Global scores - Integrating Scoreloop with libgdx]]></title>
+    <link href="http://www.moldedbits.com/blog/2012/02/26/integrating-scoreloop-with-libgdx/"/>
+    <updated>2012-02-26T13:12:00+05:30</updated>
+    <id>http://www.moldedbits.com/blog/2012/02/26/integrating-scoreloop-with-libgdx</id>
+    <content type="html"><![CDATA[<p>If you are looking for a post on why to integrate Scoreloop in your games, see <a href="http://www.andengine.org/forums/development/openfeint-and-scoreloop-t2642.html" title="why scoreloop">this</a> and <a href="http://stackoverflow.com/questions/6464431/android-scoreloop-openfeint-etc-al" title="why scoreloop">this</a>.</p>
 
-<p>Bumble is a fun and challenging word game with a unique take on anagrams.
-Burst the bubbles carrying alphabets in the right order to make dictionary
-words, all while racing against the clock.</p>
+<p>Scoreloop provides two ways to integrate their leaderboards in your games</p>
 
-<p>We are currently working on making some awesome game art. In the
-mean while you can try Bumble with minimalistic graphics <a href="/files/bumble/Bumble-0.0.9.apk" title="Download">here</a> (or
-scan the QR code below). We would love your feedback.</p>
+<ul>
+<li>ScoreloopUI - Use the UI provided by Scoreloop for quick integration</li>
+<li>ScoreloopCore - Manage scores and achievements with Scoreloop, and display them in your own UI</li>
+</ul>
 
-<p><img class="center" src="/images/qr_bumble_009.png"></p>
 
-<p>Cheers!<br/>
-The Molded Bits Team</p>
+<p>This post shows you how to do both.</p>
+
+<!--more-->
+
+
+<p>For Bumble, we decided to use both. The highscores screen lets you view the local highscores saved on device, as well as the global and
+daily highscores from Scoreloop. The main menu lets you navigate to the ScoreloopUI, where the user can view friends, check leaderboards,
+update Scoreloop profile and such.</p>
+
+<p>Lets get started.</p>
+
+<h2>Background Reading</h2>
+
+<p>The catch is Scoreloop requires every call to its sdk methods be made from the UI (main) thread of your application (<a href="http://developer.android.com/guide/topics/fundamentals/processes-and-threads.html" title="Android processes and threads">more</a>).
+While all our game related code runs in a separate thread, spawned for us by libgdx (<a href="http://code.google.com/p/libgdx/wiki/TheArchitecture" title="libgdx Architecture">more</a>).This means we need a way to
+communicate between the two threads. Lucky for us Android provides a simple way to do just that, <a href="http://developer.android.com/reference/android/os/Handler.html" title="Handler">handlers</a>. There is an
+excellent tutorial <a href="http://code.google.com/p/libgdx-users/wiki/IntegratingAndroidNativeUiElements3TierProjectSetup" title="libgdx integrating native android UI elements">here</a> that shows how to use handlers for communication between the Android "main" thread, and the libgdx thread.</p>
+
+<h2>Setup</h2>
+
+<p>Before getting started, we need to make sure of a few things</p>
+
+<ul>
+<li>Setup the 3-tier project setup as described on the <a href="http://code.google.com/p/libgdx/wiki/ProjectSetup" title="Project Setup">libgdx wiki</a>.</li>
+<li>Create an account on Scoreloop and get the SDK from <a href="http://www.scoreloop.com/download/" title="Scoreloop SDK">here</a></li>
+<li>Read the documentation provided with Scoreloop. Perform the steps mentioned in "Project Setup" for both, ScoreloopUI and ScoreloopCore
+(or if you want to integrate just one of them, then just follow the relevant steps).</li>
+</ul>
+
+
+<h2>Overview</h2>
+
+<p>Here's an overview of how everything is gonna work,</p>
+
+<p>First, we create a setup that allows us to communicate between the "main" thread and the "libgdx" thread.</p>
+
+<h3>Main Project</h3>
+
+<ul>
+<li>Create an interface in the Main Project (lets call it "ActionResolver"). Add methods for interacting with Scoreloop. We will implement this
+in the Android project.</li>
+<li>Create a contructor in the ApplicationListener that takes an object implementing ActionResolver as parameter. Save a reference to this object
+in the ApplicationListener, as we need this to make calls to Scoreloop.</li>
+</ul>
+
+
+<h3>Android Project</h3>
+
+<ul>
+<li>Create a class that implements the interface "ActionResolver".</li>
+<li>Pass the an object of the above class to the ApplicationListener when initializing it, using the constructor we made in the Main Project.</li>
+</ul>
+
+
+<p>With this, you can start communicating from your "libgdx" thread to your "main" thread.</p>
+
+<ul>
+<li>Create a class called ScoreloopHandler to handle interaction with Scoreloop servers.</li>
+</ul>
+
+
+<h2>Code</h2>
+
+<p>For Scoreloop integration, we first need to extend the Application class. This is covered in the Scoreloop documentation.
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>BumbleApplication  (BumbleApplication.java)</span> <a href='/downloads/code/BumbleApplication.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BumbleApplication</span> <span class="kd">extends</span> <span class="n">Application</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="c1">//Declare the Scoreloop Client</span>
+</span><span class='line'>	<span class="kd">private</span> <span class="kd">static</span> <span class="n">Client</span> <span class="n">client</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">static</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">(</span><span class="kd">final</span> <span class="n">Context</span> <span class="n">android_game_context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="k">if</span> <span class="o">(</span><span class="n">client</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Client</span><span class="o">(</span><span class="n">android_game_context</span><span class="o">,</span>
+</span><span class='line'>					<span class="s">&quot;gameSecret&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">();</span>
+</span><span class='line'>		<span class="n">init</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">ScoreloopManagerSingleton</span><span class="o">.</span><span class="na">init</span><span class="o">(</span><span class="k">this</span><span class="o">,</span>
+</span><span class='line'>				<span class="s">&quot;gameSecret&quot;</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onTerminate</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="kd">super</span><span class="o">.</span><span class="na">onTerminate</span><span class="o">();</span>
+</span><span class='line'>		<span class="n">ScoreloopManagerSingleton</span><span class="o">.</span><span class="na">destroy</span><span class="o">();</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>ActionResolver interface in the Main Project
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ActionResolver  (ActionResolver.java)</span> <a href='/downloads/code/ActionResolver.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ActionResolver</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">bootstrap</span><span class="o">();</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">showScoreloop</span><span class="o">();</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">submitScore</span><span class="o">(</span><span class="kt">int</span> <span class="n">mode</span><span class="o">,</span> <span class="kt">int</span> <span class="n">score</span><span class="o">);</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">refreshScores</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Implementation of ActionResolverInterface in the AndroidProject
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ActionResolverAndroid  (ActionResolverAndroid.java)</span> <a href='/downloads/code/ActionResolverAndroid.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ActionResolverAndroid</span> <span class="kd">implements</span> <span class="n">ActionResolver</span> <span class="o">{</span>
+</span><span class='line'>	<span class="n">Handler</span> <span class="n">uiThread</span><span class="o">;</span>
+</span><span class='line'>	<span class="n">BumbleAndroid</span> <span class="n">mContext</span><span class="o">;</span> <span class="c1">//Your class here which extends AndroidApplication</span>
+</span><span class='line'>	<span class="n">ScoreloopHandler</span> <span class="n">handler</span><span class="o">;</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="kd">public</span> <span class="nf">ActionResolverAndroid</span><span class="o">(</span><span class="n">BumbleAndroid</span> <span class="n">mContext</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">uiThread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Handler</span><span class="o">();</span> <span class="c1">//This binds the handler to the &quot;main&quot; thread, see documentation of handler</span>
+</span><span class='line'>		<span class="k">this</span><span class="o">.</span><span class="na">mContext</span> <span class="o">=</span> <span class="n">mContext</span><span class="o">;</span>
+</span><span class='line'>		<span class="n">handler</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ScoreloopHandler</span><span class="o">(</span><span class="n">mContext</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">showScoreloop</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Intent</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="n">EntryScreenActivity</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">mContext</span><span class="o">.</span><span class="na">startActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">submitScore</span><span class="o">(</span><span class="kd">final</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">score</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">uiThread</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>			<span class="nd">@Override</span>
+</span><span class='line'>			<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">submitScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">getRankingForScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
+</span><span class='line'>			<span class="o">}</span>
+</span><span class='line'>		<span class="o">});</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">refreshScores</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">uiThread</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>			<span class="nd">@Override</span>
+</span><span class='line'>			<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				<span class="n">Toast</span><span class="o">.</span><span class="na">makeText</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="s">&quot;Refreshing scores&quot;</span><span class="o">,</span> <span class="n">Toast</span><span class="o">.</span><span class="na">LENGTH_SHORT</span><span class="o">).</span><span class="na">show</span><span class="o">();</span>
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">getGlobalHighscores</span><span class="o">();</span>
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">getTodayHighscores</span><span class="o">();</span>
+</span><span class='line'>			<span class="o">}</span>
+</span><span class='line'>		<span class="o">});</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">bootstrap</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">uiThread</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>			<span class="nd">@Override</span>
+</span><span class='line'>			<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">getGlobalHighscores</span><span class="o">();</span>
+</span><span class='line'>				<span class="n">handler</span><span class="o">.</span><span class="na">getTodayHighscores</span><span class="o">();</span>
+</span><span class='line'>				
+</span><span class='line'>				<span class="c1">//Upload local scores, if any</span>
+</span><span class='line'>				<span class="n">ScoreloopManagerSingleton</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">submitLocalScores</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>			<span class="o">}</span>
+</span><span class='line'>		<span class="o">});</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>It is of note here that we pass an object of our class extending AndroidApplication to ActionResolverAndroid. This is important because once we
+receive the results from Scoreloop servers for our queries (the list of scores for example), we need to be able to update the "libgdx" thread
+with these results. AndroidApplication provides us with a convinient method to do this, <a href="http://libgdx.l33tlabs.org/docs/api/com/badlogic/gdx/backends/android/AndroidApplication.html#postRunnable(java.lang.Runnable)" title="postRunnable libgdx">postRunnable</a>.</p>
+
+<p>Implementation of ScoreloopHandler.java
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ScoreloopHandler  (ScoreloopHandler.java)</span> <a href='/downloads/code/ScoreloopHandler.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ScoreloopHandler</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">private</span> <span class="n">BumbleAndroid</span> <span class="n">mContext</span><span class="o">;</span> <span class="c1">//Your class here which extends AndroidApplication</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">public</span> <span class="nf">ScoreloopHandler</span><span class="o">(</span><span class="n">BumbleAndroid</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">mContext</span> <span class="o">=</span> <span class="n">context</span><span class="o">;</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">submitScore</span><span class="o">(</span><span class="kt">int</span> <span class="n">scoreValue</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;Scoreloop&quot;</span><span class="o">,</span> <span class="s">&quot;submitting score&quot;</span><span class="o">);</span>
+</span><span class='line'>		<span class="kd">final</span> <span class="n">Score</span> <span class="n">score</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Score</span><span class="o">((</span><span class="kt">double</span><span class="o">)</span> <span class="n">scoreValue</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>		<span class="kd">final</span> <span class="n">ScoreController</span> <span class="n">myScoreController</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ScoreController</span><span class="o">(</span><span class="k">new</span> <span class="n">ScoreSubmitObserver</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">myScoreController</span><span class="o">.</span><span class="na">submitScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getRankingForScore</span><span class="o">(</span><span class="kt">int</span> <span class="n">scoreValue</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">Score</span> <span class="n">score</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Score</span><span class="o">((</span><span class="kt">double</span><span class="o">)</span> <span class="n">scoreValue</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">RankingController</span> <span class="n">controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RankingController</span><span class="o">(</span><span class="k">new</span> <span class="n">RankingRequestObserver</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">controller</span><span class="o">.</span><span class="na">loadRankingForScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getGlobalHighscores</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">ScoresController</span> <span class="n">myScoresController</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ScoresController</span><span class="o">(</span><span class="k">new</span> <span class="n">GlobalRankObserver</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">setSearchList</span><span class="o">(</span><span class="n">SearchList</span><span class="o">.</span><span class="na">getGlobalScoreSearchList</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">setRangeLength</span><span class="o">(</span><span class="mi">15</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">loadRangeForUser</span><span class="o">(</span><span class="n">Session</span><span class="o">.</span><span class="na">getCurrentSession</span><span class="o">().</span><span class="na">getUser</span><span class="o">());</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">getTodayHighscores</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">ScoresController</span> <span class="n">myScoresController</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ScoresController</span><span class="o">(</span><span class="k">new</span> <span class="n">DailyRankObserver</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">setSearchList</span><span class="o">(</span><span class="n">SearchList</span><span class="o">.</span><span class="na">getTwentyFourHourScoreSearchList</span><span class="o">());</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">setRangeLength</span><span class="o">(</span><span class="mi">15</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">myScoresController</span><span class="o">.</span><span class="na">loadRangeForUser</span><span class="o">(</span><span class="n">Session</span><span class="o">.</span><span class="na">getCurrentSession</span><span class="o">().</span><span class="na">getUser</span><span class="o">());</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">private</span> <span class="kd">class</span> <span class="nc">RankingRequestObserver</span> <span class="kd">implements</span> <span class="n">RequestControllerObserver</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidFail</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">arg0</span><span class="o">,</span>
+</span><span class='line'>				<span class="n">Exception</span> <span class="n">arg1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidReceiveResponse</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">controller</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="n">Ranking</span> <span class="n">ranking</span> <span class="o">=</span> <span class="o">((</span><span class="n">RankingController</span><span class="o">)</span> <span class="n">controller</span><span class="o">).</span><span class="na">getRanking</span><span class="o">();</span>
+</span><span class='line'>			<span class="kd">final</span> <span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">ranking</span><span class="o">.</span><span class="na">getRank</span><span class="o">();</span>
+</span><span class='line'>			<span class="n">mContext</span><span class="o">.</span><span class="na">postRunnable</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				<span class="nd">@Override</span>
+</span><span class='line'>				<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="c1">//This code runs on the &quot;libgdx&quot; thread.</span>
+</span><span class='line'>          <span class="c1">//Use a local variable to store the rank in the MainProject and set it here</span>
+</span><span class='line'>				<span class="o">}</span>
+</span><span class='line'>			<span class="o">});</span>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">private</span> <span class="kd">class</span> <span class="nc">ScoreSubmitObserver</span> <span class="kd">implements</span> <span class="n">RequestControllerObserver</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidFail</span><span class="o">(</span><span class="kd">final</span> <span class="n">RequestController</span> <span class="n">requestController</span><span class="o">,</span>
+</span><span class='line'>				<span class="kd">final</span> <span class="n">Exception</span> <span class="n">exception</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;Scoreloop&quot;</span><span class="o">,</span> <span class="s">&quot;score submitted exception &quot;</span> <span class="o">+</span> <span class="n">exception</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidReceiveResponse</span><span class="o">(</span><span class="kd">final</span> <span class="n">RequestController</span> <span class="n">requestController</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="s">&quot;Scoreloop&quot;</span><span class="o">,</span> <span class="s">&quot;score submitted successsfully&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="kd">private</span> <span class="kd">class</span> <span class="nc">DailyRankObserver</span> <span class="kd">implements</span> <span class="n">RequestControllerObserver</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidFail</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">arg0</span><span class="o">,</span>
+</span><span class='line'>				<span class="n">Exception</span> <span class="n">arg1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidReceiveResponse</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">controller</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Score</span><span class="o">&gt;</span> <span class="n">retrievedScores</span> <span class="o">=</span> <span class="o">((</span><span class="n">ScoresController</span><span class="o">)</span> <span class="n">controller</span><span class="o">).</span><span class="na">getScores</span><span class="o">();</span>
+</span><span class='line'>			<span class="n">mContext</span><span class="o">.</span><span class="na">postRunnable</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				<span class="nd">@Override</span>
+</span><span class='line'>				<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="c1">//This code runs on the &quot;libgdx&quot; thread.</span>
+</span><span class='line'>          <span class="c1">//Use a local variable to store the daily ranks in the MainProject and set it here</span>
+</span><span class='line'>				<span class="o">}</span>
+</span><span class='line'>			<span class="o">});</span>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="kd">private</span> <span class="kd">class</span> <span class="nc">GlobalRankObserver</span> <span class="kd">implements</span> <span class="n">RequestControllerObserver</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidFail</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">arg0</span><span class="o">,</span>
+</span><span class='line'>				<span class="n">Exception</span> <span class="n">arg1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>		<span class="nd">@Override</span>
+</span><span class='line'>		<span class="kd">public</span> <span class="kt">void</span> <span class="nf">requestControllerDidReceiveResponse</span><span class="o">(</span><span class="n">RequestController</span> <span class="n">controller</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>			<span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Score</span><span class="o">&gt;</span> <span class="n">retrievedScores</span> <span class="o">=</span> <span class="o">((</span><span class="n">ScoresController</span><span class="o">)</span> <span class="n">controller</span><span class="o">).</span><span class="na">getScores</span><span class="o">();</span>
+</span><span class='line'>			<span class="n">mContext</span><span class="o">.</span><span class="na">postRunnable</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>				<span class="nd">@Override</span>
+</span><span class='line'>				<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="c1">//This code runs on the &quot;libgdx&quot; thread.</span>
+</span><span class='line'>          <span class="c1">//Use a local variable to store the global ranks in the MainProject and set it here</span>
+</span><span class='line'>				<span class="o">}</span>
+</span><span class='line'>			<span class="o">});</span>
+</span><span class='line'>		<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Now we can call the Scoreloop methods from the game code as such,
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Call Scoreloop methods from game code  (BumbleGame.java)</span> <a href='/downloads/code/BumbleGame.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BumbleGame</span> <span class="kd">extends</span> <span class="n">Game</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>	<span class="n">ActionResolver</span> <span class="n">actionResolver</span><span class="o">;</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="n">MainMenuScreen</span> <span class="n">mainMenuScreen</span><span class="o">;</span>
+</span><span class='line'>	
+</span><span class='line'>	
+</span><span class='line'>	<span class="kd">public</span> <span class="nf">BumbleGame</span><span class="o">(</span><span class="n">ActionResolver</span> <span class="n">resolver</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="k">this</span><span class="o">.</span><span class="na">actionResolver</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">;</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="nd">@Override</span>
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">create</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>		<span class="n">Assets</span><span class="o">.</span><span class="na">load</span><span class="o">();</span>
+</span><span class='line'>		
+</span><span class='line'>		<span class="n">mainMenuScreen</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MainMenuScreen</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>		<span class="n">setScreen</span><span class="o">(</span><span class="n">mainMenuScreen</span><span class="o">);</span>
+</span><span class='line'>		
+</span><span class='line'>		<span class="k">if</span><span class="o">(</span><span class="n">actionResolver</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>			<span class="n">actionResolver</span><span class="o">.</span><span class="na">bootstrap</span><span class="o">();</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>	
+</span><span class='line'>	<span class="kd">public</span> <span class="kt">void</span> <span class="nf">saveScore</span><span class="o">(</span><span class="kt">int</span> <span class="n">score</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>		<span class="c1">//Submit to score loop</span>
+</span><span class='line'>		<span class="k">if</span><span class="o">(</span><span class="n">actionResolver</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class='line'>			<span class="n">actionResolver</span><span class="o">.</span><span class="na">submitScore</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">score</span><span class="o">);</span>
+</span><span class='line'>	<span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">showScoreloop</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">if</span><span class="o">(</span><span class="n">actionResolver</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">actionResolver</span><span class="o">.</span><span class="na">showScoreloop</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Thats about all you need to integrate Scoreloop with libgdx for global scores. Hope it helps. If I missed anything, do let me know through the comments.</p>
+
+<p>Cheers,
+basilisk
+Molded Bits</p>
 ]]></content>
   </entry>
   
