@@ -4,7 +4,7 @@
   <title><![CDATA[Category: android | Molded Bits]]></title>
   <link href="http://www.moldedbits.com/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-03-13T22:14:45+05:30</updated>
+  <updated>2012-03-14T00:42:40+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -12,6 +12,234 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Porting libgdx applications to HTML5]]></title>
+    <link href="http://www.moldedbits.com/blog/2012/03/13/porting-libgdx-applications-to-html5/"/>
+    <updated>2012-03-13T22:20:00+05:30</updated>
+    <id>http://www.moldedbits.com/blog/2012/03/13/porting-libgdx-applications-to-html5</id>
+    <content type="html"><![CDATA[<p>Yet another reason to love <a href="http://code.google.com/p/libgdx/" title="libgdx">libgdx</a>, you can now port your
+libgdx applications straight to HTML5 (<a href="http://www.badlogicgames.com/wordpress/?p=2308" title="badlogic">official post</a>)! If
+your app doesn't use box2d or any fancy library, you can easily port
+it to HTML5 with the gwt-backend for libgdx. List of <a href="http://code.google.com/p/libgdx/source/browse/trunk/gdx/src/com/badlogic/gdx.gwt.xml" title="supported classes">supported classes</a>.</p>
+
+<p>Here is a step-by-step guide to porting your libgdx apps to HTML5 and
+being awesome.</p>
+
+<!--more-->
+
+
+<h2>Setup your environment</h2>
+
+<ul>
+<li><p>Checkout the libgdx source code from the <a href="http://code.google.com/p/libgdx/source/checkout" title="svn">svn</a><br/>
+I recommend getting the whole source, but you only really need gdx,
+gdx-backends-gwt and the superjumper demo.</p></li>
+<li><p>Install the <a href="http://code.google.com/eclipse/docs/download.html" title="google">Google plugin for eclipse</a></p></li>
+<li><p>Import the libgdx projects(checked out from svn) into your workspace
+in eclipse.</p></li>
+</ul>
+
+
+<h2>Create your project</h2>
+
+<ul>
+<li><p>In eclipse, select "Create new Web Application Project".</p></li>
+<li><p>Give the project name and package, uncheck "Use Google App Engine"
+and "Generate sample code" and click finish.</p></li>
+<li><p>Open project properties -> java build path. In the projects tab, add
+gdx, gdx-backends-gwt and your libgdx project.</p></li>
+</ul>
+
+
+<h2>Time to code</h2>
+
+<ul>
+<li>In your libgdx code, create a file YourGame.gwt.xml.<br/>
+Here's the file for the SuperJumer example
+In the example below, the xml file is in com.badlogic package, and the
+source path is relative to this package (this effectively tells gwt
+to look in com.badlogic.superjumper package).</li>
+</ul>
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>SuperJumper.gwt.xml  (SuperJumper.gwt.xml)</span> <a href='/downloads/code/SuperJumper.gwt.xml'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+</span><span class='line'><span class="cp">&lt;!DOCTYPE module PUBLIC &quot;-//Google Inc.//DTD Google Web Toolkit trunk//EN&quot; &quot;http://google-web-toolkit.googlecode.com/svn/trunk/distro-source/core/src/gwt-module.dtd&quot;&gt;</span>
+</span><span class='line'><span class="nt">&lt;module&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;source</span> <span class="na">path=</span><span class="s">&quot;superjumper&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;exclude</span> <span class="na">name=</span><span class="s">&quot;**/SuperJumperDesktop.java&quot;</span><span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/source&gt;</span>
+</span><span class='line'><span class="nt">&lt;/module&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+<li>Open your newly created project. In the base package, create a file
+named YourGameGwt.gwt.xml<br/>
+Here's the file for SuperJumper. The inherits tags tell gwt the places
+to look for code, and the entry-point tag tell gwt the starting point
+of the application. Change the first inherits tag to point to the xml
+file created in the previous step. We will create the entry point class in
+the next step.</li>
+</ul>
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>SuperJumperGwt.gwt.xml  (SuperJumperGwt.gwt.xml)</span> <a href='/downloads/code/SuperJumperGwt.gwt.xml'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+</span><span class='line'><span class="cp">&lt;!DOCTYPE module PUBLIC &quot;-//Google Inc.//DTD Google Web Toolkit trunk//EN&quot; &quot;http://google-web-toolkit.googlecode.com/svn/trunk/distro-source/core/src/gwt-module.dtd&quot;&gt;</span>
+</span><span class='line'><span class="nt">&lt;module&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;inherits</span> <span class="na">name=</span><span class="s">&#39;com.badlogic.gdx.backends.gdx_backends_gwt&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;inherits</span> <span class="na">name=</span><span class="s">&#39;com.badlogicgames.SuperJumper&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;entry-point</span> <span class="na">class=</span><span class="s">&#39;com.badlogicgames.superjumper.client.SuperJumperGwt&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/module&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+<li>Create a new class named YourGameGwt.java (preferrably in the package
+your.base.package.client)<br/>
+Here's this class for the SuperJumper example</li>
+</ul>
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>SuperJumperGwt.java  (SuperJumperGwt.java)</span> <a href='/downloads/code/SuperJumperGwt.java'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">badlogicgames</span><span class="o">.</span><span class="na">superjumper</span><span class="o">.</span><span class="na">client</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.badlogic.gdx.ApplicationListener</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.badlogic.gdx.backends.gwt.GwtApplication</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.badlogic.gdx.backends.gwt.GwtApplicationConfiguration</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.badlogicgames.superjumper.SuperJumper</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SuperJumperGwt</span> <span class="kd">extends</span> <span class="n">GwtApplication</span> <span class="o">{</span>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">GwtApplicationConfiguration</span> <span class="nf">getConfig</span> <span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">GwtApplicationConfiguration</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GwtApplicationConfiguration</span><span class="o">(</span><span class="mi">320</span><span class="o">,</span> <span class="mi">480</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">config</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">ApplicationListener</span> <span class="nf">getApplicationListener</span> <span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="k">new</span> <span class="nf">SuperJumper</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+<li><p>Right click on your project in the package explorer, select "Google" ->
+"GWT Compile". If everything goes right, you console should output
+something like "Compiling 6 permutations", and create a folder with your
+package name in the "war" folder.</p></li>
+<li><p>Copy your data folder to "war".</p></li>
+<li><p>Create a file called "assets.txt" in the "war" folder, which loads all
+your assets.<br/>
+Here's the assets file for the SuperJumper example,</p></li>
+</ul>
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>assets.txt  (assets.txt)</span> <a href='/downloads/code/assets.txt'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>i:data/background.png
+</span><span class='line'>t:data/font.fnt
+</span><span class='line'>i:data/font.png
+</span><span class='line'>i:data/help.png
+</span><span class='line'>i:data/help1.png
+</span><span class='line'>i:data/help2.png
+</span><span class='line'>i:data/help3.png
+</span><span class='line'>i:data/help4.png
+</span><span class='line'>i:data/help5.png
+</span><span class='line'>i:data/items.png
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Note that i represents image, and t represents any other data.</p>
+
+<ul>
+<li>Lastly, create an html file in the "war" folder (you can name it
+anything).<br/>
+Here's the file for the SuperJumper example, replace the src tag
+for script with the script generated for you by gwt.</li>
+</ul>
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>superjumper.html  (superjumper.html)</span> <a href='/downloads/code/superjumper.html'>download</a></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="cp">&lt;!doctype html&gt;</span>
+</span><span class='line'><span class="nt">&lt;html&gt;</span>
+</span><span class='line'><span class="nt">&lt;head&gt;</span>
+</span><span class='line'><span class="nt">&lt;meta</span> <span class="na">http-equiv=</span><span class="s">&quot;content-type&quot;</span> <span class="na">content=</span><span class="s">&quot;text/html; charset=UTF-8&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">language=</span><span class="s">&quot;javascript&quot;</span> <span class="na">src=</span><span class="s">&quot;com.badlogicgames.superjumper.SuperJumperGwt/com.badlogicgames.superjumper.SuperJumperGwt.nocache.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'><span class="nt">&lt;/head&gt;</span>
+</span><span class='line'><span class="nt">&lt;body&gt;</span>
+</span><span class='line'><span class="nt">&lt;/body&gt;</span>
+</span><span class='line'><span class="nt">&lt;/html&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+<li><p>Run your project, it should start a webserver and give you a url.
+Open the url in a browser, and voila! your app is now running in the
+browser with webgl!<br/>
+If your app seems a little slow, fear not. Its the server thats slow.</p></li>
+<li><p>Copy the war folder to your webserver, and share your app with the world!</p></li>
+</ul>
+
+
+<p>Thats all you need to port your apps to HTML5. Its really that simple!</p>
+
+<p>Do let me know if I missed anything.</p>
+
+<p>Happy coding!<br/>
+basilisk<br/>
+The Molded Bits Team</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hello HTML5]]></title>
