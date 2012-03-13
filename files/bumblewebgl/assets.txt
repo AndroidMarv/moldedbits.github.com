@@ -1,0 +1,17 @@
+t:data/packedimages/pack
+i:data/packedimages/images1.png
+i:data/packedimages/jellyfish1.png
+t:data/fonts/ubuntu/ubuntu.fnt
+i:data/fonts/ubuntu/ubuntu_00.png
+t:data/fonts/nunito22/nunito22.fnt
+i:data/fonts/nunito22/nunito22_00.png
+t:data/fonts/nunito32/nunito32.fnt
+i:data/fonts/nunito32/nunito32_00.png
+t:data/fonts/nunito42/nunito42.fnt
+i:data/fonts/nunito42/nunito42_00.png
+t:data/words3.txt
+t:data/words4.txt
+t:data/words5.txt
+t:data/words6.txt
+t:data/words7.txt
+t:data/words8.txt
