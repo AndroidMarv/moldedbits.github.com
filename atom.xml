@@ -4,7 +4,7 @@
   <title><![CDATA[Molded Bits]]></title>
   <link href="http://www.moldedbits.com/atom.xml" rel="self"/>
   <link href="http://www.moldedbits.com/"/>
-  <updated>2012-03-13T21:20:57+05:30</updated>
+  <updated>2012-03-13T22:14:45+05:30</updated>
   <id>http://www.moldedbits.com/</id>
   <author>
     <name><![CDATA[Anuj Middha]]></name>
@@ -12,6 +12,20 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Hello HTML5]]></title>
+    <link href="http://www.moldedbits.com/blog/2012/03/13/hello-html5/"/>
+    <updated>2012-03-13T21:50:00+05:30</updated>
+    <id>http://www.moldedbits.com/blog/2012/03/13/hello-html5</id>
+    <content type="html"><![CDATA[<p>It took a while, but we finally ported Bumble to HTML5! Thanks to
+the awesome libgdx framework and the <a href="http://badlogicgames.com" title="BadLogic Games">guys behind it</a>! All you
+need is a browser that supports webgl (check it <a href="http://get.webgl.org/" title="webgl">here</a>), and you
+can play Bumble right in your browser.</p>
+
+<p>Play Bumble in your browser <a href="http://www.moldedbits.com/files/bumblewebgl/bumble.html" title="bumble">here</a>.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Bumble - Out Now]]></title>
